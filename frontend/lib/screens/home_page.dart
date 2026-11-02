@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../models/product.dart';
@@ -5,6 +6,7 @@ import '../services/api_service.dart';
 import '../services/auth_service.dart';
 import '../services/cart_service.dart';
 import 'cart_page.dart';
+import 'my_orders_page.dart';
 
 class HomePage extends StatefulWidget {
   final AuthService authService;
@@ -29,15 +31,35 @@ class _HomePageState extends State<HomePage> {
     productsFuture = ApiService.getProducts();
   }
 
+  void _openMyOrders() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MyOrdersPage(
+          authService: widget.authService,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('🥬 Smart Vendor'),
         actions: [
+          IconButton(
+            tooltip: 'My Orders',
+            onPressed: _openMyOrders,
+            icon: const Icon(
+              Icons.receipt_long_outlined,
+            ),
+          ),
+
           Stack(
             children: [
               IconButton(
+                tooltip: 'Cart',
                 onPressed: () {
                   Navigator.push(
                     context,
@@ -48,7 +70,9 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ).then((_) {
-                    setState(() {});
+                    if (mounted) {
+                      setState(() {});
+                    }
                   });
                 },
                 icon: const Icon(

@@ -1,3 +1,4 @@
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from sqlalchemy.orm import Session
@@ -9,7 +10,6 @@ from app.models.order import Order
 from app.models.order_item import OrderItem
 from app.models.product import Product
 from app.models.user import User
-
 
 from app.schemas.order import CreateOrderRequest
 
@@ -41,7 +41,6 @@ def create_order(
         )
 
     total_amount = 0
-
     order_items_data = []
 
     for item in request.items:
@@ -58,11 +57,7 @@ def create_order(
                 detail=f"Product {item.product_id} not found"
             )
 
-        item_total = (
-            product.price *
-            item.quantity
-        )
-
+        item_total = product.price * item.quantity
         total_amount += item_total
 
         order_items_data.append({
@@ -78,7 +73,6 @@ def create_order(
     )
 
     db.add(order)
-
     db.flush()
 
     for item_data in order_items_data:
@@ -159,29 +153,25 @@ def get_my_orders(
 
             items.append({
                 "product_id": item.product_id,
-
                 "product_name": (
                     product.name
                     if product
                     else "Unknown Product"
                 ),
-
                 "quantity": item.quantity,
-
                 "price": item.price,
-
-                "total":
-                    item.price * item.quantity
+                "total": item.price * item.quantity
             })
 
         result.append({
             "id": order.id,
-
             "status": order.status,
-
-            "total_amount":
-                order.total_amount,
-
+            "created_at": (
+                order.created_at.isoformat()
+                if order.created_at
+                else None
+            ),
+            "total_amount": order.total_amount,
             "items": items
         })
 
