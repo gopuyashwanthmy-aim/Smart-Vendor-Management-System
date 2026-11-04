@@ -14,6 +14,7 @@ from app.models.product import Product
 from app.models.user import User
 from app.models.inventory import Inventory
 from app.models.sale import Sale
+from app.models.notification import Notification
 
 from app.schemas.order import UpdateOrderStatusRequest
 
@@ -125,6 +126,8 @@ def get_all_orders(
 
             "created_at":
                 order.created_at,
+            "scheduled_delivery_at": order.scheduled_delivery_at,
+            "delivery_slot": order.delivery_slot,
 
             "items": order_items
         })
@@ -231,6 +234,8 @@ def get_order_details(
 
         "created_at":
             order.created_at,
+        "scheduled_delivery_at": order.scheduled_delivery_at,
+        "delivery_slot": order.delivery_slot,
 
         "items": order_items
     }
@@ -365,6 +370,14 @@ def update_order_status(
             item.profit = data["profit"]
 
     order.status = new_status
+
+    customer_message = {
+        "CONFIRMED": f"Your order #{order.id} has been confirmed by the vendor.",
+        "PURCHASING": f"The vendor has started purchasing items for order #{order.id}.",
+        "READY": f"Your order #{order.id} is ready for delivery.",
+        "DELIVERED": f"Your order #{order.id} has been delivered. Thank you for shopping with us!",
+    }.get(new_status, f"Your order #{order.id} status is now {new_status}.")
+    db.add(Notification(user_id=order.user_id, title=f"Order {new_status.title()}", message=customer_message, order_id=order.id))
 
     db.commit()
     db.refresh(order)

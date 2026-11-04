@@ -12,6 +12,7 @@ import 'financial_dashboard_page.dart';
 import 'ai_market_plan_page.dart';
 import 'ai_insights_page.dart';
 import 'order_detail_page.dart';
+import 'customer_pages.dart';
 
 class AdminDashboard extends StatefulWidget {
   final AuthService authService;
@@ -975,86 +976,41 @@ class _AdminDashboardState extends State<AdminDashboard> {
   // BUILD
   // =========================================================
 
+  Widget _menuItem(BuildContext context, IconData icon, String title, VoidCallback action) {
+    return ListTile(leading: Icon(icon, color: const Color(0xFF2E7D32)), title: Text(title), onTap: () { Navigator.pop(context); action(); });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Smart Vendor Admin',
+      drawer: Drawer(
+        child: SafeArea(
+          child: Column(
+            children: [
+              Container(width: double.infinity, padding: const EdgeInsets.all(22), color: const Color(0xFFE4F1E1), child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [CircleAvatar(radius: 27, backgroundColor: Colors.white, child: Icon(Icons.storefront, color: Color(0xFF2E7D32), size: 30)), SizedBox(height: 10), Text('Vendor Workspace', style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold, color: Color(0xFF194D24))), Text('Smart Vendor Admin', style: TextStyle(color: Color(0xFF55745A)))])),
+              Expanded(child: ListView(children: [
+                _menuItem(context, Icons.dashboard_outlined, 'Dashboard', () {}),
+                _menuItem(context, Icons.inventory_2_outlined, 'Product Management', _openProductManagement),
+                _menuItem(context, Icons.category_outlined, 'Product Categories', () => Navigator.push(context, MaterialPageRoute(builder: (_) => CategoryManagementPage(authService: widget.authService)))),
+                _menuItem(context, Icons.receipt_long_outlined, 'Orders', () => Navigator.push(context, MaterialPageRoute(builder: (_) => AdminOrdersPage(authService: widget.authService)))),
+                _menuItem(context, Icons.warehouse_outlined, 'Inventory', _openInventory),
+                _menuItem(context, Icons.shopping_basket_outlined, 'Market Purchase Plan', _openMarketPlan),
+                _menuItem(context, Icons.auto_awesome, 'AI Market Purchase Plan', _openAiMarketPlan),
+                _menuItem(context, Icons.point_of_sale, 'Quick Sale', _openQuickSale),
+                _menuItem(context, Icons.history, 'Sales History', _openSalesHistory),
+                _menuItem(context, Icons.account_balance_wallet_outlined, 'Financial Reports', _openFinancialManagement),
+                _menuItem(context, Icons.insights, 'AI Business Insights', _openAiInsights),
+                _menuItem(context, Icons.settings_suggest, 'AI Management', _openAiManagement),
+                _menuItem(context, Icons.notifications_outlined, 'Notifications', () => Navigator.push(context, MaterialPageRoute(builder: (_) => AdminNotificationsPage(authService: widget.authService)))),
+              ])),
+              const Divider(),
+              ListTile(leading: const Icon(Icons.refresh), title: const Text('Refresh dashboard'), onTap: () { Navigator.pop(context); refreshDashboard(); }),
+              ListTile(leading: const Icon(Icons.logout, color: Colors.red), title: const Text('Logout'), onTap: () { widget.authService.logout(); Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false); }),
+            ],
+          ),
         ),
-        actions: [
-          IconButton(
-            tooltip: 'Market Purchase Plan',
-            onPressed: _openMarketPlan,
-            icon: const Icon(
-              Icons.shopping_basket_outlined,
-            ),
-          ),
-          IconButton(
-            tooltip: 'AI Market Purchase Plan',
-            onPressed: _openAiMarketPlan,
-            icon: const Icon(
-              Icons.auto_awesome,
-            ),
-          ),
-          IconButton(
-            tooltip: 'AI Business Insights',
-            onPressed: _openAiInsights,
-            icon: const Icon(
-              Icons.insights,
-            ),
-          ),
-          IconButton(
-            tooltip: 'AI Management',
-            onPressed: _openAiManagement,
-            icon: const Icon(
-              Icons.settings_suggest,
-            ),
-          ),
-          IconButton(
-            tooltip: 'Inventory',
-            onPressed: _openInventory,
-            icon: const Icon(
-              Icons.inventory_2_outlined,
-            ),
-          ),
-          IconButton(
-            tooltip: 'Product Management',
-            onPressed: _openProductManagement,
-            icon: const Icon(
-              Icons.category_outlined,
-            ),
-          ),
-          IconButton(
-            tooltip: 'Financial Management',
-            onPressed: _openFinancialManagement,
-            icon: const Icon(
-              Icons.account_balance_wallet_outlined,
-            ),
-          ),
-          IconButton(
-            tooltip: 'Quick Sale',
-            onPressed: _openQuickSale,
-            icon: const Icon(
-              Icons.point_of_sale,
-            ),
-          ),
-          IconButton(
-            tooltip: 'Sales History',
-            onPressed: _openSalesHistory,
-            icon: const Icon(
-              Icons.receipt_long_outlined,
-            ),
-          ),
-          IconButton(
-            tooltip: 'Refresh Dashboard',
-            onPressed: refreshDashboard,
-            icon: const Icon(
-              Icons.refresh,
-            ),
-          ),
-        ],
       ),
+      appBar: AppBar(title: const Text('Smart Vendor Admin')),
       body: FutureBuilder<Map<String, dynamic>>(
         future: dashboardFuture,
         builder: (context, snapshot) {

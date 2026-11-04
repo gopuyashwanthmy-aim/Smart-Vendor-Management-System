@@ -57,6 +57,10 @@ class _ProductManagementPageState
   }) async {
 
     final isEditing = product != null;
+    List<dynamic> availableCategories = [];
+    try {
+      availableCategories = await ApiService.getCategories();
+    } catch (_) {}
 
     final nameController = TextEditingController(
       text: product?.name ?? '',
@@ -84,7 +88,7 @@ class _ProductManagementPageState
 
 
     String? errorMessage;
-
+    int? selectedCategoryId = product?.categoryId ?? (availableCategories.isNotEmpty ? availableCategories.first['id'] as int : null);
 
     final result = await showDialog<bool>(
       context: context,
@@ -159,15 +163,25 @@ class _ProductManagementPageState
 
                       const SizedBox(height: 14),
 
-                      TextField(
-                        controller: categoryController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Category ID',
-                          hintText: 'Example: 1',
-                          border: OutlineInputBorder(),
+                      if (availableCategories.isNotEmpty)
+                        DropdownButtonFormField<int>(
+                          value: selectedCategoryId,
+                          decoration: const InputDecoration(labelText: 'Product category'),
+                          items: availableCategories.map((category) => DropdownMenuItem<int>(
+                            value: category['id'] as int,
+                            child: Text(category['name'].toString()),
+                          )).toList(),
+                          onChanged: (value) => setDialogState(() {
+                            selectedCategoryId = value;
+                            categoryController.text = value?.toString() ?? '';
+                          }),
+                        )
+                      else
+                        TextField(
+                          controller: categoryController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(labelText: 'Category ID (create a category first)', border: OutlineInputBorder()),
                         ),
-                      ),
 
                       const SizedBox(height: 14),
 
@@ -227,10 +241,7 @@ class _ProductManagementPageState
                       stockController.text.trim(),
                     );
 
-                    final categoryId =
-                        int.tryParse(
-                      categoryController.text.trim(),
-                    );
+                    final categoryId = selectedCategoryId ?? int.tryParse(categoryController.text.trim());
 
                     if (name.isEmpty) {
                       setDialogState(() {
