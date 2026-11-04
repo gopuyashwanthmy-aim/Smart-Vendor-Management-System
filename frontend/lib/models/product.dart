@@ -24,7 +24,7 @@ class Product {
       unit: json['unit'],
       price: (json['price'] as num).toDouble(),
       stockQuantity:
-          (json['stock_quantity'] as num).toDouble(),
+          ((json['available_quantity'] ?? json['stock_quantity'] ?? 0) as num).toDouble(),
       imageUrl: json['image_url'],
       categoryId: json['category_id'],
     );

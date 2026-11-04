@@ -149,6 +149,9 @@ class ApiService {
   static Future<Map<String, dynamic>> createOrder({
     required List<CartItem> items,
     required String token,
+    int? deliveryAddressId,
+    DateTime? scheduledDeliveryAt,
+    String? deliverySlot,
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/orders/'),
@@ -157,6 +160,9 @@ class ApiService {
         'Authorization': 'Bearer $token',
       },
       body: jsonEncode({
+        'delivery_address_id': deliveryAddressId,
+        'scheduled_delivery_at': scheduledDeliveryAt?.toUtc().toIso8601String(),
+        'delivery_slot': deliverySlot,
         'items': items.map((item) {
           return {
             'product_id': item.product.id,
@@ -676,4 +682,79 @@ class ApiService {
 
     return '$year-$month-$day';
   }
+
+
+  // CUSTOMER EXPERIENCE: categories, profile, addresses and notifications.
+  static Future<List<dynamic>> getCategories() async {
+    final response = await http.get(Uri.parse('$baseUrl/categories/'));
+    if (response.statusCode == 200) return jsonDecode(response.body) as List<dynamic>;
+    throw Exception('Failed to load categories: ${response.body}');
+  }
+
+  static Future<Map<String, dynamic>> getCustomerProfile(String token) async {
+    final response = await http.get(Uri.parse('$baseUrl/customer/profile'), headers: {'Authorization': 'Bearer $token'});
+    if (response.statusCode == 200) return jsonDecode(response.body) as Map<String, dynamic>;
+    throw Exception('Failed to load profile: ${response.body}');
+  }
+
+  static Future<Map<String, dynamic>> updateCustomerProfile({required String token, required String name}) async {
+    final response = await http.put(Uri.parse('$baseUrl/customer/profile'), headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'}, body: jsonEncode({'name': name}));
+    if (response.statusCode == 200) return jsonDecode(response.body) as Map<String, dynamic>;
+    throw Exception('Failed to update profile: ${response.body}');
+  }
+
+  static Future<List<dynamic>> getCustomerAddresses(String token) async {
+    final response = await http.get(Uri.parse('$baseUrl/customer/addresses'), headers: {'Authorization': 'Bearer $token'});
+    if (response.statusCode == 200) return jsonDecode(response.body) as List<dynamic>;
+    throw Exception('Failed to load addresses: ${response.body}');
+  }
+
+  static Future<Map<String, dynamic>> saveCustomerAddress({required String token, required Map<String, dynamic> address, int? addressId}) async {
+    final uri = Uri.parse(addressId == null ? '$baseUrl/customer/addresses' : '$baseUrl/customer/addresses/$addressId');
+    final response = await (addressId == null ? http.post(uri, headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'}, body: jsonEncode(address)) : http.put(uri, headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'}, body: jsonEncode(address)));
+    if (response.statusCode == 200 || response.statusCode == 201) return jsonDecode(response.body) as Map<String, dynamic>;
+    throw Exception('Failed to save address: ${response.body}');
+  }
+
+  static Future<void> deleteCustomerAddress({required String token, required int addressId}) async {
+    final response = await http.delete(Uri.parse('$baseUrl/customer/addresses/$addressId'), headers: {'Authorization': 'Bearer $token'});
+    if (response.statusCode != 200) throw Exception('Failed to delete address: ${response.body}');
+  }
+
+  static Future<List<dynamic>> getNotifications(String token) async {
+    final response = await http.get(Uri.parse('$baseUrl/customer/notifications'), headers: {'Authorization': 'Bearer $token'});
+    if (response.statusCode == 200) return jsonDecode(response.body) as List<dynamic>;
+    throw Exception('Failed to load notifications: ${response.body}');
+  }
+
+  static Future<int> getUnreadNotificationCount(String token) async {
+    final response = await http.get(Uri.parse('$baseUrl/customer/notifications/unread-count'), headers: {'Authorization': 'Bearer $token'});
+    if (response.statusCode == 200) return (jsonDecode(response.body)['count'] as num).toInt();
+    throw Exception('Failed to load notification count: ${response.body}');
+  }
+
+  static Future<void> markNotificationRead({required String token, required int notificationId}) async {
+    final response = await http.patch(Uri.parse('$baseUrl/customer/notifications/$notificationId/read'), headers: {'Authorization': 'Bearer $token'});
+    if (response.statusCode != 200) throw Exception('Failed to update notification: ${response.body}');
+  }
+
+  static Future<void> markAllNotificationsRead(String token) async {
+    final response = await http.post(Uri.parse('$baseUrl/customer/notifications/read-all'), headers: {'Authorization': 'Bearer $token'});
+    if (response.statusCode != 200) throw Exception('Failed to update notifications: ${response.body}');
+  }
+
+  static Future<Map<String, dynamic>> createCategory({required String token, required String name}) async {
+    final response = await http.post(Uri.parse('$baseUrl/categories/'), headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'}, body: jsonEncode({'name': name}));
+    if (response.statusCode == 201) return jsonDecode(response.body) as Map<String, dynamic>;
+    throw Exception('Failed to create category: ${response.body}');
+  }
+
+  static Future<void> deleteCategory({required String token, required int categoryId}) async {
+    final response = await http.delete(Uri.parse('$baseUrl/categories/$categoryId'), headers: {'Authorization': 'Bearer $token'});
+    if (response.statusCode != 200) throw Exception('Failed to delete category: ${response.body}');
+  }
+
+
+
+
 }

@@ -203,3 +203,26 @@ Deployment validation checklist:
 - Neon free database has quotas and can scale to zero. Monitor usage and keep independent backups.
 - No SMS OTP, payment gateway, delivery tracking or push notifications are included unless already supported by the existing application.
 - This is a public demo/prototype deployment configuration, not a guarantee of uninterrupted production service.
+
+## Customer experience and navigation upgrade
+
+This release adds the following customer features:
+
+- Customer hamburger drawer for Home, Profile, Delivery Addresses, Cart, My Orders, Scheduled Deliveries, Notifications and Logout.
+- Product category chips, product-name search and maximum-price filtering.
+- Availability labels (in stock, low stock and out of stock) based on remaining inventory batches, with product stock fallback when no inventory batch exists.
+- Saved delivery addresses with create, edit, delete and default-address support.
+- Scheduled delivery date and time-slot selection during checkout.
+- In-app notifications for order placement and each admin status transition (CONFIRMED, PURCHASING, READY and DELIVERED). The notifications page refreshes while open.
+- Admin hamburger drawer for existing vendor modules, plus category management, order management and notifications.
+- Light-green Material 3 application theme.
+
+### Database update
+
+The new Alembic revision `f47a91c2d801` adds `customer_addresses` and `notifications` and three nullable scheduling/address columns to `orders`. It is additive; it does not delete or rewrite existing customer, product, inventory, order or sales rows.
+
+The existing Render startup command (`python -m app.init_db`) applies Alembic upgrades when a version table exists. For restored legacy databases without Alembic history, the initializer creates the new tables and adds missing nullable order columns before stamping the current revision. Always take a fresh database backup before applying schema changes in a real environment.
+
+### Notification delivery note
+
+Order updates are stored as in-app notifications for the signed-in customer (and new-order notifications for admin accounts). The app refreshes the notification list while its Notifications page is open. Remote push notifications to a device/browser are not configured in this release; they require Firebase Cloud Messaging client configuration and browser/mobile permission setup.

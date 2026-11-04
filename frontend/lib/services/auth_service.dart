@@ -66,6 +66,10 @@ class AuthService {
     }
   }
 
+  void updateLocalUser(Map<String, dynamic> user) {
+    _user = {...?_user, ...user};
+  }
+
   void logout() {
     _token = null;
     _user = null;

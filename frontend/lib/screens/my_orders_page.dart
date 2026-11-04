@@ -133,7 +133,11 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
     if (value == null) return 'Date unavailable';
 
     try {
-      final date = DateTime.parse(value.toString()).toLocal();
+      var raw = value.toString();
+      if (!raw.endsWith('Z') && !RegExp(r'[+-]\d{2}:\d{2}$').hasMatch(raw)) {
+        raw = '${raw}Z';
+      }
+      final date = DateTime.parse(raw).toLocal();
 
       final day = date.day.toString().padLeft(2, '0');
       final month = date.month.toString().padLeft(2, '0');
@@ -299,6 +303,14 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
               ],
             ),
 
+            if (order['scheduled_delivery_at'] != null) ...[
+              const SizedBox(height: 10),
+              Row(children: [const Icon(Icons.event_available, size: 17, color: Color(0xFF2E7D32)), const SizedBox(width: 7), Expanded(child: Text('Scheduled: ${order['scheduled_delivery_at']} · ${order['delivery_slot'] ?? ''}', style: const TextStyle(fontSize: 13, color: Color(0xFF2E7D32))))]),
+            ],
+            if (order['delivery_address'] != null) ...[
+              const SizedBox(height: 7),
+              Row(children: [const Icon(Icons.location_on_outlined, size: 17, color: Colors.grey), const SizedBox(width: 7), Expanded(child: Text(order['delivery_address'], style: const TextStyle(fontSize: 13, color: Colors.grey)))]),
+            ],
             const Divider(height: 25),
 
             ...items.map((item) {

@@ -1,49 +1,44 @@
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
 # Python
 __pycache__/
 *.py[cod]
-*.egg-info/
-backend/venv/
-backend/.venv/
-backend/.env
-.env
+*.pyd
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local databases and backups
+*.db
+*.sqlite
+*.sqlite3
+*.dump
+backups/
 
 # Flutter / Dart
-frontend/.dart_tool/
-frontend/.flutter-plugins
-frontend/.flutter-plugins-dependencies
-frontend/build/
-frontend/.packages
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+build/
+.flutter-ephemeral/
 
-# Android signing secrets
-frontend/android/key.properties
-frontend/android/app/*.jks
-frontend/android/app/*.keystore
-*.jks
-*.keystore
+# IDE and operating system
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
 
-# Generated model files (production artifacts are stored in PostgreSQL)
-backend/app/ml/models/*.joblib
-
-# Local database backups and logs
-backups/
-*.dump
-*.sql
+# Logs and temporary files
 *.log
-
-# Local SDK and hosting state
-frontend/android/local.properties
-frontend/android/.gradle/
-frontend/ios/Flutter/Generated.xcconfig
-frontend/ios/Flutter/flutter_export_environment.sh
-.firebase/
-firebase-debug.log
-ui-debug.log
-.pytest_cache/
-.coverage
-
-
-# Environment-specific secrets
-.env.*
-!.env.example
-backend/.env.*
-!backend/.env.example
+*.tmp
+*.bak

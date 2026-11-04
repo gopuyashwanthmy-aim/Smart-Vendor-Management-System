@@ -10,6 +10,7 @@ from sqlalchemy import inspect
 from app.core.database import engine
 # Import all models so Alembic sees the complete metadata.
 from app.models import category, inventory, order, order_item, product, sale, user, ml_model_artifact  # noqa: F401
+from app.models import address, notification  # noqa: F401
 
 
 def main() -> None:
@@ -34,11 +35,28 @@ def main() -> None:
     Base.metadata.create_all(bind=engine)
     tables = set(inspect(engine).get_table_names())
 
+    # Additive compatibility for restored/current databases without Alembic history.
+    # New tables are created by metadata.create_all above; these columns are added
+    # only when absent. Existing customer/order data is never rewritten.
+    from sqlalchemy import text
+    order_columns = {column["name"] for column in inspect(engine).get_columns("orders")}
+    with engine.begin() as connection:
+        if "delivery_address_id" not in order_columns:
+            connection.execute(text("ALTER TABLE orders ADD COLUMN delivery_address_id INTEGER NULL"))
+        if "scheduled_delivery_at" not in order_columns:
+            connection.execute(text("ALTER TABLE orders ADD COLUMN scheduled_delivery_at TIMESTAMP NULL"))
+        if "delivery_slot" not in order_columns:
+            connection.execute(text("ALTER TABLE orders ADD COLUMN delivery_slot VARCHAR(60) NULL"))
+        if engine.dialect.name == "postgresql":
+            connection.execute(text("DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_orders_delivery_address') THEN ALTER TABLE orders ADD CONSTRAINT fk_orders_delivery_address FOREIGN KEY (delivery_address_id) REFERENCES customer_addresses(id); END IF; END $$;"))
+
     required_columns = {
         "users": {"id", "name", "phone", "password_hash", "role"},
         "categories": {"id", "name"},
         "products": {"id", "name", "unit", "price", "stock_quantity", "category_id"},
-        "orders": {"id", "user_id", "status", "total_amount", "created_at"},
+        "orders": {"id", "user_id", "status", "total_amount", "created_at", "delivery_address_id", "scheduled_delivery_at", "delivery_slot"},
+        "customer_addresses": {"id", "user_id", "label", "recipient_name", "phone", "address_line", "city", "pincode", "is_default", "created_at"},
+        "notifications": {"id", "user_id", "title", "message", "order_id", "is_read", "created_at"},
         "order_items": {"id", "order_id", "product_id", "quantity", "price", "revenue", "cost_of_goods_sold", "profit"},
         "inventory": {"id", "product_id", "purchased_quantity", "purchase_cost_per_unit", "total_purchase_cost", "reserved_quantity", "remaining_quantity", "created_at"},
         "sales": {"id", "product_id", "quantity", "selling_price", "total_amount", "cost_of_goods_sold", "profit", "created_at"},

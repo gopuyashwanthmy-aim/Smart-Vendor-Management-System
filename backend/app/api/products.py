@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.security import get_current_admin
 from app.models.product import Product
+from app.models.inventory import Inventory
+from app.models.category import Category
 from app.models.user import User
 from app.schemas.product import (
     ProductCreateRequest,
@@ -25,13 +27,20 @@ router = APIRouter(
 def get_products(
     db: Session = Depends(get_db),
 ):
-    products = (
-        db.query(Product)
-        .order_by(Product.name.asc())
-        .all()
-    )
-
-    return products
+    products = db.query(Product).order_by(Product.name.asc()).all()
+    result = []
+    for product in products:
+        batches = db.query(Inventory).filter(Inventory.product_id == product.id).all()
+        if batches:
+            available = sum(float(batch.remaining_quantity or 0) for batch in batches)
+        else:
+            available = float(product.stock_quantity or 0)
+        category = db.query(Category).filter(Category.id == product.category_id).first()
+        result.append({"id": product.id, "name": product.name, "unit": product.unit, "price": product.price,
+                       "stock_quantity": product.stock_quantity, "available_quantity": max(0, available),
+                       "image_url": product.image_url, "category_id": product.category_id,
+                       "category_name": category.name if category else "Other"})
+    return result
 
 
 # =========================================================
